@@ -1,5 +1,5 @@
 # Rapport SAÉ 51 - Projet VBox
-**Auteurs :** NODARI Evan
+**Auteur :** NODARI Evan
 **Date :** 16 Septembre 2026
 
 ## Résumé
