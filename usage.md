@@ -3,21 +3,28 @@
 **Date :** 16 Septembre 2026
 
 ## Résumé
-Ce document présente notre solution d'automatisation pour la création de machines virtuelles sous VirtualBox via des scripts Batch Windows. Il détaille le fonctionnement de nos scripts (`genmv_X.bat`), les limites actuelles, ainsi que les différents obstacles techniques rencontrés (notamment avec l'hyperviseur de Windows) et la façon dont nous les avons contournés.
+Ce document présente ma solution d'automatisation pour la création de machines virtuelles sous VirtualBox via des scripts Batch Windows. Il détaille le fonctionnement des scripts (`genmv_X.bat`), les limites actuelles, ainsi que les différents obstacles techniques rencontrés et la façon dont je les ais contournés.
 
 ## Utilisation
-Pour le moment, le projet contient les premières itérations de notre script d'automatisation. 
-Pour l'utiliser, il suffit d'exécuter le script `genmv_2.bat` depuis l'invite de commande ou en double-cliquant dessus. 
-Le script se charge de :
-- Créer une machine virtuelle nommée "test".
-- Allouer 4096 Mo de RAM.
-- Créer et attacher un disque dur virtuel de 64 GiB.
-- Configurer la carte réseau en NAT.
-- Mettre le script en pause pour permettre la vérification sur l'interface graphique de VirtualBox, puis supprimer la machine proprement pour nettoyer l'environnement.
+Le script genmv_3.bat s'exécute de manière non interactive depuis l'invite de commande (CLI). Il prend en charge des arguments pour exécuter des actions ciblées sur une machine spécifique.   
+Syntaxe : genmv_3.bat [OPTION] [NOM_VM]
+
+Les options disponibles sont les suivantes :   
+- L (Lister) : Affiche la liste de toutes les machines enregistrées dans VirtualBox, ainsi que leurs métadonnées personnalisées (Date de création et Utilisateur). Cette option ne nécessite pas de second argument.   
+- N (New/Créer) : Vérifie si la machine existe (et la supprime proprement si c'est le cas), puis crée une nouvelle VM avec la configuration suivante : OS Debian 64 bits, 4096 Mo de RAM, disque de 64 GiB en SATA, et réseau NAT.   
+- S (Supprimer) : Désenregistre et supprime totalement la machine virtuelle spécifiée.   
+- D (Démarrer) : Lance la machine virtuelle en arrière-plan (mode headless sans interface graphique).   
+- A (Arrêter) : Force l'arrêt électrique (poweroff) de la machine virtuelle
+
+### Intégration au PATH
+Pour s'affranchir de la nécessité de se positionner dans le répertoire du projet pour lancer les commandes, deux scripts utilitaires ont été conçus :
+- installer_path.bat : Récupère dynamiquement le chemin absolu du dossier courant via la variable `%~dp0` et l'ajoute de manière sécurisée aux variables d'environnement utilisateur de Windows (PATH) en s'appuyant sur l'API .NET de PowerShell.
+- retirer_path.bat : Permet de nettoyer proprement le PATH en extrayant et supprimant uniquement le chemin du projet, garantissant ainsi une désinstallation propre de l'outil.
 
 ## Limites actuelles
-- Le script est en cours d'amélioration. 
-- La gestion des arguments pour rendre le script totalement non interactif n'est pas encore commencée".
+- La configuration du PXE et le serveur TFTP interne de VirtualBox rencontrent actuellement des dysfonctionnements.
 
 ## Astuces techniques utilisées
-- Utilisation de variables d'environnement dans le Batch (`set NOM=test`, `%RAM%`) pour rendre les valeurs facilement modifiables en tête de script.
+- Gestion des variables : Utilisation de variables d'environnement en en-tête de script (set RAM=4096, set DISQUE=65536) pour rendre la configuration matérielle facilement modifiable..
+- Stockage : Le chemin de création et d'attachement du disque dur virtuel (.vdi) a été forcé de manière absolue vers %USERPROFILE%\VirtualBox VMs\%NOM%\ pour éviter que les disques ne s'éparpillent dans le dossier d'exécution du script.
+- Gestion des métadonnées : Le script injecte automatiquement la date de création (%DATE%) et le nom de l'utilisateur Windows (%USERNAME%) directement dans le fichier de configuration de la VM via la commande setextradata. Ces données sont ensuite récupérées via getextradata lors de l'appel de l'option L.
